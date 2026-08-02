@@ -134,6 +134,11 @@ function Library.CreateWindow(title, logoId)
     end
     ToggleBtn.MouseButton1Click:Connect(ToggleHub)
 
+    local currentKeybind = Enum.KeyCode.RightControl
+    UserInputService.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == currentKeybind then ToggleHub() end
+    end)
+
     local Window = {SelectedPlayer = nil}
     local firstTab = true
 
@@ -236,7 +241,7 @@ function Library.CreateWindow(title, logoId)
                 TglFrame.BackgroundTransparency = 0.3
                 Instance.new("UICorner", TglFrame).CornerRadius = UDim.new(0, 6)
                 local Lbl = Instance.new("TextLabel", TglFrame)
-                Lbl.Size = UDim2.new(1, -50, 1, 0)
+                Lbl.Size = UDim2.new(1, -120, 1, 0)
                 Lbl.Position = UDim2.new(0, 10, 0, 0)
                 Lbl.BackgroundTransparency = 1
                 Lbl.Text = text
@@ -244,6 +249,25 @@ function Library.CreateWindow(title, logoId)
                 Lbl.TextSize = 13
                 Lbl.Font = Enum.Font.Gotham
                 Lbl.TextXAlignment = Enum.TextXAlignment.Left
+                
+                local KeyBtn = Instance.new("ImageButton", TglFrame)
+                KeyBtn.Size = UDim2.new(0, 18, 0, 18)
+                KeyBtn.Position = UDim2.new(1, -70, 0.5, -9)
+                KeyBtn.BackgroundTransparency = 1
+                KeyBtn.Image = "rbxassetid://121332782788896"
+                KeyBtn.ImageColor3 = Library.Theme.TextDark
+                
+                local KeyLabel = Instance.new("TextLabel", TglFrame)
+                KeyLabel.Size = UDim2.new(0, 50, 0, 20)
+                KeyLabel.Position = UDim2.new(1, -70, 0.5, -10)
+                KeyLabel.BackgroundTransparency = 1
+                KeyLabel.Text = ""
+                KeyLabel.TextColor3 = Library.Theme.Accent
+                KeyLabel.TextSize = 10
+                KeyLabel.Font = Enum.Font.GothamBold
+                KeyLabel.TextXAlignment = Enum.TextXAlignment.Right
+                KeyLabel.Visible = false
+                
                 local Swt = Instance.new("TextButton", TglFrame)
                 Swt.Size = UDim2.new(0, 36, 0, 18)
                 Swt.Position = UDim2.new(1, -46, 0.5, -9)
@@ -255,13 +279,32 @@ function Library.CreateWindow(title, logoId)
                 Circ.Position = default and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
                 Circ.BackgroundColor3 = Color3.new(1, 1, 1)
                 Instance.new("UICorner", Circ).CornerRadius = UDim.new(1, 0)
+                
                 local toggled = default
-                Swt.MouseButton1Click:Connect(function()
+                local function Fire()
                     toggled = not toggled
                     TweenService:Create(Circ, TweenInfo.new(0.2), {Position = toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}):Play()
                     TweenService:Create(Swt, TweenInfo.new(0.2), {BackgroundColor3 = toggled and Library.Theme.Accent or Color3.fromRGB(60, 60, 60)}):Play()
                     callback(toggled)
+                end
+                Swt.MouseButton1Click:Connect(Fire)
+                
+                local currentToggleKey = nil
+                KeyBtn.MouseButton1Click:Connect(function()
+                    KeyLabel.Visible = true
+                    KeyLabel.Text = "..."
+                    KeyLabel.Position = UDim2.new(1, -70, 0.5, -10)
+                    TweenService:Create(KeyLabel, TweenInfo.new(0.4, Enum.EasingStyle.Quart), {Position = UDim2.new(1, -125, 0.5, -10)}):Play()
+                    local c; c = UserInputService.InputBegan:Connect(function(i)
+                        if i.UserInputType == Enum.UserInputType.Keyboard then
+                            currentToggleKey = i.KeyCode
+                            KeyLabel.Text = "[" .. i.KeyCode.Name .. "]"
+                            KeyBtn.ImageColor3 = Library.Theme.Accent
+                            c:Disconnect()
+                        end
+                    end)
                 end)
+                UserInputService.InputBegan:Connect(function(i, g) if not g and currentToggleKey and i.KeyCode == currentToggleKey then Fire() end end)
             end
 
             function Section:CreateSlider(text, min, max, default, callback)
@@ -431,6 +474,7 @@ function Library.CreateWindow(title, logoId)
             SidebarBG.BackgroundColor3 = Library.Theme.Sidebar
         end
     end
+    function Window.SetKeybind(key) currentKeybind = key end
     function Window.GetSelectedPlayer() return Window.SelectedPlayer end
 
     return Window
